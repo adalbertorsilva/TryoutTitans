@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Tryout Titans</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="titulo">FICHA DE INSCRIÇÃO:</string>
+    <string name="nome">Nome Completo:</string>
+    <string name="idade">Idade:</string>
+    <string name="altura">Altura:</string>
+    <string name="hint_nome">Digite o nome do candidato</string>
+    <string name="peso">Peso:</string>
+    <string name="tamanho">Tamanho da Camisa:</string>
+    <string name="telefone">Telefone:</string>
+    <string name="hint_telefone">Digite o telefone</string>
+    <string name="contatoEmergencia">Contato de Emergência:</string>
+    <string name="email">Email:</string>
+    <string name="hint_email">Digite o email</string>
+    <string name="pagamento">Pagamento efetuado:</string>
+    <string name="sim">Sim</string>
+    <string name="title_activity_tela_splash">TelaSplashActivity</string>
+    <string name="salvar">Salvar</string>
+    <string name="nomeContatoEmergencia">Nome do Contato:</string>
+    <string name="hintNomeContato">Digite o nome do contato</string>
+    <string name="nomeContato">Nome do Contato:</string>
+</resources>
