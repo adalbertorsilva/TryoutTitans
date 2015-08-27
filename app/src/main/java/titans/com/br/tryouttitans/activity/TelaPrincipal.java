@@ -33,6 +33,7 @@ import org.androidannotations.annotations.ViewById;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.sql.SQLException;
 
 import br.com.jansenfelipe.androidmask.MaskEditTextChangedListener;
 import titans.com.br.tryouttitans.R;
@@ -145,10 +146,14 @@ public class TelaPrincipal extends AppCompatActivity {
         try {
             validarPreenchimentoCampos();
             preencherCamposCandidato();
-            
-            Snackbar.make(findViewById(R.id.corpo), "Candiato Salvo", Snackbar.LENGTH_LONG).show();
+            candidatoDao.createIfNotExists(candidato);
+            candidatoDao.queryForAll().size();
+
+            Snackbar.make(findViewById(R.id.corpo), "Ok" , Snackbar.LENGTH_LONG).show();
         } catch (CampoObrigatorioException e) {
             Snackbar.make(findViewById(R.id.corpo), e.getMessage(), Snackbar.LENGTH_LONG).setActionTextColor(R.color.myPrimaryColor).show();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
     }

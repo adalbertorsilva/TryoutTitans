@@ -18,28 +18,40 @@ public class Candidato {
     @DatabaseField(generatedId = true)
     private Long id;
 
+    @DatabaseField
     private byte[] fotografia;
 
+    @DatabaseField
     private String nome;
 
+    @DatabaseField
     private Integer idade;
 
+    @DatabaseField
     private Integer peso;
 
+    @DatabaseField
     private Double altura;
 
+    @DatabaseField
     private String tamanhoCamisa;
 
+    @DatabaseField
     private Integer telefone;
 
+    @DatabaseField
     private Integer contatoEmergencia;
 
+    @DatabaseField
     private String nomeContatoEmergencia;
 
+    @DatabaseField
     private String email;
 
+    @DatabaseField
     private Boolean pagamentoEfetuado;
 
+    @DatabaseField
     private Boolean exportado;
 
     public Candidato() {
