@@ -49,5 +49,6 @@ dependencies {
     apt 'com.android.databinding:compiler:1.0-rc1'
     compile 'com.android.support:design:22.2.0'
     compile 'com.android.support:appcompat-v7:22.2.0'
-
+    compile 'com.j256.ormlite:ormlite-android:4.48'
+    compile 'com.nhaarman.supertooltips:library:3.0.+'
 }

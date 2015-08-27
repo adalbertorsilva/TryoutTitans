@@ -3,23 +3,32 @@ package titans.com.br.tryouttitans.activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.Toast;
+
+import com.j256.ormlite.dao.Dao;
+import com.nhaarman.supertooltips.ToolTip;
+import com.nhaarman.supertooltips.ToolTipRelativeLayout;
+import com.nhaarman.supertooltips.ToolTipView;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.Click;
 import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.OrmLiteDao;
 import org.androidannotations.annotations.ViewById;
 
 import java.io.ByteArrayOutputStream;
@@ -27,6 +36,8 @@ import java.io.File;
 
 import br.com.jansenfelipe.androidmask.MaskEditTextChangedListener;
 import titans.com.br.tryouttitans.R;
+import titans.com.br.tryouttitans.dao.BancoDadosHelper;
+import titans.com.br.tryouttitans.excessoes.CampoObrigatorioException;
 import titans.com.br.tryouttitans.model.Candidato;
 
 
@@ -40,6 +51,9 @@ public class TelaPrincipal extends AppCompatActivity {
 
     @Bean
     Candidato candidato;
+
+    @OrmLiteDao(helper = BancoDadosHelper.class, model = Candidato.class)
+    Dao<Candidato, Long> candidatoDao;
 
     @ViewById
     ImageView fotografia;
@@ -64,8 +78,10 @@ public class TelaPrincipal extends AppCompatActivity {
     @ViewById
     RadioGroup tamanhos;
 
-//    @ViewById
-//    FloatingActionButton fab;
+    @ViewById
+    Button botaoSalvar;
+
+    private ToolTipView ttv;
 
     @ViewById
     Toolbar tb_main;
@@ -73,15 +89,15 @@ public class TelaPrincipal extends AppCompatActivity {
     @AfterViews
     public void configurarAplicacao(){
         setSupportActionBar(tb_main);
-        getSupportActionBar().setLogo(R.mipmap.ic_launcher);
+        getSupportActionBar().setLogo(R.mipmap.soutitans);
         getSupportActionBar().setDisplayUseLogoEnabled(true);
-        getSupportActionBar().setIcon(R.mipmap.ic_launcher);
+        getSupportActionBar().setIcon(R.mipmap.soutitans);
         configurarMascaras();
     }
 
     private void configurarMascaras() {
         MaskEditTextChangedListener mascaraTelefone = new MaskEditTextChangedListener("#####-####", telefone);
-        MaskEditTextChangedListener mascaraEmergencia = new MaskEditTextChangedListener("#####-####", contatoEmergencia);
+        MaskEditTextChangedListener mascaraEmergencia = new MaskEditTextChangedListener("####-####", contatoEmergencia);
         MaskEditTextChangedListener mascaraAltura = new MaskEditTextChangedListener("#.##", altura);
 
         telefone.addTextChangedListener(mascaraTelefone);
@@ -93,11 +109,6 @@ public class TelaPrincipal extends AppCompatActivity {
     public void ativarCamera(){
         startCamera();
     }
-
-//    @Click(R.id.fab)
-//    public void ativarCameraFab(){
-//        startCamera();
-//    }
 
     private void startCamera() {
         Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -131,23 +142,71 @@ public class TelaPrincipal extends AppCompatActivity {
     @Click(R.id.botaoSalvar)
     public void salvar(){
 
-        preencherCamposCandidato();
+        try {
+            validarPreenchimentoCampos();
+            preencherCamposCandidato();
+            
+            Snackbar.make(findViewById(R.id.corpo), "Candiato Salvo", Snackbar.LENGTH_LONG).show();
+        } catch (CampoObrigatorioException e) {
+            Snackbar.make(findViewById(R.id.corpo), e.getMessage(), Snackbar.LENGTH_LONG).setActionTextColor(R.color.myPrimaryColor).show();
+        }
 
-        Toast.makeText(this,  "Candiato Salvo", Toast.LENGTH_LONG).show();
+    }
 
-//        for(Field campo : Candidato.class.getFields()){
-//
-//            if(!campo.getType().equals(Long.class) && campo.get(candidato) == null){
-//                Toast.makeText(this, "Campo " + campo.getName() + " é obrigatório", Toast.LENGTH_LONG).show();
-//            }else{
-//                Toast.makeText(this, candidato.toString(), Toast.LENGTH_LONG).show();
-//            }
-//
-//        }
+    private void validarPreenchimentoCampos() throws CampoObrigatorioException {
+
+        validarFotografia();
+        validarCampoTexto(nome);
+        validarCampoTexto(idade);
+        validarCampoTexto(peso);
+        validarCampoTexto(altura);
+        validarCampoTexto(telefone);
+        validarCampoTexto(contatoEmergencia);
+        validarCampoTexto(nomeContatoEmergencia);
+        validarCampoTexto(email);
+        validarRadioGroup();
 
 
 
+    }
 
+    private void validarFotografia() throws CampoObrigatorioException {
+        if(foto == null){
+
+            ToolTipRelativeLayout toolTipContainer = (ToolTipRelativeLayout) findViewById(R.id.toolTipFotografia);
+            ToolTip toolTip = new ToolTip().withText(getResources().getString(R.string.campoObrigatorio)).withShadow().withColor(getResources().getColor(R.color.myPrimaryColor)).withTextColor(Color.WHITE);
+            toolTip.withTypeface(Typeface.DEFAULT_BOLD);
+            toolTipContainer.showToolTipForView(toolTip, fotografia);
+            fotografia.requestFocus();
+
+            throw new CampoObrigatorioException();
+
+        }
+    }
+
+    private void validarCampoTexto(EditText campo) throws CampoObrigatorioException {
+        if(campo.getText().toString().isEmpty()){
+            ToolTipRelativeLayout toolTipContainer = (ToolTipRelativeLayout) ((TextInputLayout) campo.getParent()).getChildAt(1);
+            ToolTip toolTip = new ToolTip().withText(getResources().getString(R.string.campoObrigatorio)).withShadow().withColor(getResources().getColor(R.color.myPrimaryColor)).withTextColor(Color.WHITE);
+            toolTip.withTypeface(Typeface.DEFAULT_BOLD);
+            toolTipContainer.showToolTipForView(toolTip, campo);
+            campo.requestFocus();
+
+            throw new CampoObrigatorioException();
+        }
+    }
+
+    private void validarRadioGroup() throws CampoObrigatorioException {
+        if( findViewById(tamanhos.getCheckedRadioButtonId()) == null){
+
+            ToolTipRelativeLayout toolTipContainer = (ToolTipRelativeLayout) findViewById(R.id.toolTipTamanhos);
+            ToolTip toolTip = new ToolTip().withText(getResources().getString(R.string.campoObrigatorio)).withShadow().withColor(getResources().getColor(R.color.myPrimaryColor)).withTextColor(Color.WHITE);
+            toolTip.withTypeface(Typeface.DEFAULT_BOLD);
+            toolTipContainer.showToolTipForView(toolTip, tamanhos);
+            tamanhos.requestFocus();
+
+            throw new CampoObrigatorioException();
+        }
     }
 
     private void preencherCamposCandidato() {
@@ -165,14 +224,21 @@ public class TelaPrincipal extends AppCompatActivity {
     }
 
     private byte[] obterFotografiaEmArrayDeBytes(){
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        foto.compress(Bitmap.CompressFormat.JPEG,50,byteArrayOutputStream);
-        return byteArrayOutputStream.toByteArray();
+
+        if(foto != null){
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            foto.compress(Bitmap.CompressFormat.JPEG,50,byteArrayOutputStream);
+            return byteArrayOutputStream.toByteArray();
+        }
+        return null;
     }
 
     private String obterValorRadioButtonSelecionado() {
-        RadioButton radioButtonSelecionado = (RadioButton) findViewById(tamanhos.getCheckedRadioButtonId());
-        return radioButtonSelecionado.getText().toString();
+        return getRadioButtonSelecionado() == null ? null : getRadioButtonSelecionado().getText().toString();
+    }
+
+    private RadioButton getRadioButtonSelecionado() {
+        return (RadioButton) findViewById(tamanhos.getCheckedRadioButtonId());
     }
 
     private String obterValorString(EditText campo){
@@ -180,17 +246,17 @@ public class TelaPrincipal extends AppCompatActivity {
     }
 
     private Integer obterValorInteiro(EditText campo){
-        return Integer.parseInt(obterValorString(campo));
+        return  campo.getText().toString().isEmpty() ? null : Integer.parseInt(obterValorString(campo));
     }
 
     private Double obterValorDouble(EditText campo){
-        return Double.parseDouble(campo.getText().toString());
+        return  campo.getText().toString().isEmpty() ? null : Double.parseDouble(campo.getText().toString());
     }
 
     private Integer obterValorTelefone(EditText campo){
 
         String  valorCampo = obterValorString(campo);
-        return Integer.parseInt(valorCampo.replace("-", ""));
+        return  campo.getText().toString().isEmpty() ? null :  Integer.parseInt(valorCampo.replace("-", ""));
     }
 
     private Boolean obterValorBoolean(CheckBox campo){

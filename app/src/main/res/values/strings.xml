@@ -22,4 +22,5 @@
     <string name="nomeContatoEmergencia">Nome do Contato:</string>
     <string name="hintNomeContato">Digite o nome do contato</string>
     <string name="nomeContato">Nome do Contato:</string>
+    <string name="campoObrigatorio">Campo Obrigatório !</string>
 </resources>

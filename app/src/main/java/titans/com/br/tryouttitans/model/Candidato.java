@@ -1,5 +1,8 @@
 package titans.com.br.tryouttitans.model;
 
+import com.j256.ormlite.field.DatabaseField;
+import com.j256.ormlite.table.DatabaseTable;
+
 import org.androidannotations.annotations.EBean;
 
 import java.util.Arrays;
@@ -8,9 +11,11 @@ import java.util.Arrays;
  * Created by junior on 15/08/15.
  */
 
+@DatabaseTable(tableName = "candidatos")
 @EBean
 public class Candidato {
 
+    @DatabaseField(generatedId = true)
     private Long id;
 
     private byte[] fotografia;
