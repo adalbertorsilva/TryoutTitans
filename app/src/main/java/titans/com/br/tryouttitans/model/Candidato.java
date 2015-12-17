@@ -2,10 +2,15 @@ package titans.com.br.tryouttitans.model;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.RequestBody;
 
 import org.androidannotations.annotations.EBean;
 
+import java.io.IOException;
 import java.util.Arrays;
+
+import okio.BufferedSink;
 
 /**
  * Created by junior on 15/08/15.
@@ -13,13 +18,13 @@ import java.util.Arrays;
 
 @DatabaseTable(tableName = "candidatos")
 @EBean
-public class Candidato {
+public class Candidato extends RequestBody{
 
     @DatabaseField(generatedId = true)
     private Long id;
 
     @DatabaseField
-    private byte[] fotografia;
+    private String fotografia;
 
     @DatabaseField
     private String nome;
@@ -28,13 +33,13 @@ public class Candidato {
     private Integer idade;
 
     @DatabaseField
-    private Integer peso;
+    private Double peso;
 
     @DatabaseField
     private Double altura;
 
     @DatabaseField
-    private String tamanhoCamisa;
+    private String camisa;
 
     @DatabaseField
     private Integer telefone;
@@ -58,6 +63,16 @@ public class Candidato {
         this.exportado = false;
     }
 
+    @Override
+    public MediaType contentType() {
+        return MediaType.parse("application/json; charset=utf-8");
+    }
+
+    @Override
+    public void writeTo(BufferedSink sink) throws IOException {
+        sink.writeUtf8("teste");
+    }
+
     //    GETTERS && SETTERS
 
     public Long getId() {
@@ -68,11 +83,11 @@ public class Candidato {
         this.id = id;
     }
 
-    public byte[] getFotografia() {
+    public String getFotografia() {
         return fotografia;
     }
 
-    public void setFotografia(byte[] fotografia) {
+    public void setFotografia(String fotografia) {
         this.fotografia = fotografia;
     }
 
@@ -92,11 +107,11 @@ public class Candidato {
         this.idade = idade;
     }
 
-    public Integer getPeso() {
+    public Double getPeso() {
         return peso;
     }
 
-    public void setPeso(Integer peso) {
+    public void setPeso(Double peso) {
         this.peso = peso;
     }
 
@@ -108,12 +123,12 @@ public class Candidato {
         this.altura = altura;
     }
 
-    public String getTamanhoCamisa() {
-        return tamanhoCamisa;
+    public String getCamisa() {
+        return camisa;
     }
 
-    public void setTamanhoCamisa(String tamanhoCamisa) {
-        this.tamanhoCamisa = tamanhoCamisa;
+    public void setCamisa(String camisa) {
+        this.camisa = camisa;
     }
 
     public Integer getTelefone() {
@@ -168,12 +183,12 @@ public class Candidato {
     public String toString() {
         return "Candidato{" +
                 "id=" + id +
-                ", fotografia=" + Arrays.toString(fotografia) +
+                ", fotografia=" + fotografia +
                 ", nome='" + nome + '\'' +
                 ", idade=" + idade +
                 ", peso=" + peso +
                 ", altura=" + altura +
-                ", tamanhoCamisa='" + tamanhoCamisa + '\'' +
+                ", tamanhoCamisa='" + camisa + '\'' +
                 ", telefone=" + telefone +
                 ", contatoEmergencia=" + contatoEmergencia +
                 ", nomeContatoEmergencia='" + nomeContatoEmergencia + '\'' +

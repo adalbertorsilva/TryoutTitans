@@ -12,6 +12,7 @@ import android.support.design.widget.Snackbar;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -22,24 +23,28 @@ import android.widget.RadioGroup;
 import com.j256.ormlite.dao.Dao;
 import com.nhaarman.supertooltips.ToolTip;
 import com.nhaarman.supertooltips.ToolTipRelativeLayout;
-import com.nhaarman.supertooltips.ToolTipView;
 
 import org.androidannotations.annotations.AfterViews;
+import org.androidannotations.annotations.Background;
 import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.Click;
 import org.androidannotations.annotations.EActivity;
 import org.androidannotations.annotations.OrmLiteDao;
+import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.sql.SQLException;
+import java.io.IOException;
 
 import br.com.jansenfelipe.androidmask.MaskEditTextChangedListener;
+import retrofit.Call;
+import retrofit.Retrofit;
 import titans.com.br.tryouttitans.R;
 import titans.com.br.tryouttitans.dao.BancoDadosHelper;
 import titans.com.br.tryouttitans.excessoes.CampoObrigatorioException;
 import titans.com.br.tryouttitans.model.Candidato;
+import titans.com.br.tryouttitans.rest.TryoutTitansService;
 
 
 @EActivity(R.layout.activity_tela_principal)
@@ -82,9 +87,9 @@ public class TelaPrincipal extends AppCompatActivity {
     @ViewById
     Button botaoSalvar;
 
-    private ToolTipView ttv;
+    private TryoutTitansService service;
 
-    @ViewById
+            @ViewById
     Toolbar tb_main;
 
     @AfterViews
@@ -94,6 +99,15 @@ public class TelaPrincipal extends AppCompatActivity {
         getSupportActionBar().setDisplayUseLogoEnabled(true);
         getSupportActionBar().setIcon(R.mipmap.soutitans);
         configurarMascaras();
+        configurarClienteRest();
+    }
+
+    private void configurarClienteRest() {
+        Retrofit retrofit = new Retrofit.Builder()
+                                        .baseUrl("http://424194a5.ngrok.io")
+                                        .build();
+
+        service = retrofit.create(TryoutTitansService.class);
     }
 
     private void configurarMascaras() {
@@ -146,20 +160,43 @@ public class TelaPrincipal extends AppCompatActivity {
         try {
             validarPreenchimentoCampos();
             preencherCamposCandidato();
-            candidatoDao.createIfNotExists(candidato);
-            candidatoDao.queryForAll().size();
 
-            Snackbar.make(findViewById(R.id.corpo), "Ok" , Snackbar.LENGTH_LONG).show();
+            Call<Candidato> callCandidato = service.adicionarCandidato(candidato);
+            Snackbar.make(findViewById(R.id.corpo), callCandidato.toString(), Snackbar.LENGTH_LONG).show();
+
+//            executarRequest();
+
+//            candidatoDao.createIfNotExists(candidato);
+//            candidatoDao.queryForAll().size();
+
         } catch (CampoObrigatorioException e) {
             Snackbar.make(findViewById(R.id.corpo), e.getMessage(), Snackbar.LENGTH_LONG).setActionTextColor(R.color.myPrimaryColor).show();
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
+//        catch (SQLException e) {
+//            e.printStackTrace();
+//        }
 
     }
 
-    private void validarPreenchimentoCampos() throws CampoObrigatorioException {
+    @Background
+    public void executarRequest() {
+        try {
+            Call<Candidato> callCandidato = service.adicionarCandidato(candidato);
+//            callCandidato.toString()
+            callCandidato.execute();
 
+            exibirMensagemSucesso();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @UiThread
+    public void exibirMensagemSucesso() {
+        Snackbar.make(findViewById(R.id.corpo), "Ok", Snackbar.LENGTH_LONG).show();
+    }
+
+    private void validarPreenchimentoCampos() throws CampoObrigatorioException {
         validarFotografia();
         validarCampoTexto(nome);
         validarCampoTexto(idade);
@@ -170,9 +207,6 @@ public class TelaPrincipal extends AppCompatActivity {
         validarCampoTexto(nomeContatoEmergencia);
         validarCampoTexto(email);
         validarRadioGroup();
-
-
-
     }
 
     private void validarFotografia() throws CampoObrigatorioException {
@@ -215,10 +249,10 @@ public class TelaPrincipal extends AppCompatActivity {
     }
 
     private void preencherCamposCandidato() {
-        candidato.setFotografia(obterFotografiaEmArrayDeBytes());
+        candidato.setFotografia(obterFotografiaEmString());
         candidato.setNome(obterValorString(nome));
         candidato.setIdade(obterValorInteiro(idade));
-        candidato.setPeso(obterValorInteiro(peso));
+        candidato.setPeso(obterValorDouble(peso));
         candidato.setAltura(obterValorDouble(altura));
         candidato.setTamanhoCamisa(obterValorRadioButtonSelecionado());
         candidato.setTelefone(obterValorTelefone(telefone));
@@ -228,12 +262,12 @@ public class TelaPrincipal extends AppCompatActivity {
         candidato.setPagamentoEfetuado(obterValorBoolean(pagamento));
     }
 
-    private byte[] obterFotografiaEmArrayDeBytes(){
+    private String obterFotografiaEmString(){
 
         if(foto != null){
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            foto.compress(Bitmap.CompressFormat.JPEG,50,byteArrayOutputStream);
-            return byteArrayOutputStream.toByteArray();
+            foto.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream);
+            return Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT);
         }
         return null;
     }
@@ -259,7 +293,6 @@ public class TelaPrincipal extends AppCompatActivity {
     }
 
     private Integer obterValorTelefone(EditText campo){
-
         String  valorCampo = obterValorString(campo);
         return  campo.getText().toString().isEmpty() ? null :  Integer.parseInt(valorCampo.replace("-", ""));
     }
